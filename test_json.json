@@ -1,0 +1,14 @@
+{
+    "payer" : "Misha",
+    "shop" : "Пятерочка",
+    "location" : "Подрезково",
+    "date" : "11/08/2026",
+    "products" : [
+        {
+            "name" : "Молоко",
+            "price" : 76,
+            "amount" : 1,
+            "flag" : "common"
+        }
+    ]
+}
