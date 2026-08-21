@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Common Budget</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f5f5f5;
+            margin: 0;
+            padding: 24px;
+            color: #222;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        .panel {
+            background: #fff;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            margin-bottom: 24px;
+        }
+        h1, h2 {
+            margin-top: 0;
+        }
+        form {
+            display: grid;
+            gap: 14px;
+        }
+        .row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 12px;
+        }
+        label {
+            display: flex;
+            flex-direction: column;
+            font-size: 14px;
+            gap: 6px;
+        }
+        input, select, button {
+            padding: 10px 12px;
+            font-size: 14px;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+        }
+        button {
+            cursor: pointer;
+            background: #2b74d8;
+            color: white;
+            border: none;
+            font-weight: 600;
+        }
+        button.secondary {
+            background: #4d4d4d;
+        }
+        .products {
+            display: grid;
+            gap: 12px;
+        }
+        .product-item {
+            padding: 12px;
+            border: 1px solid #e0e0e0;
+            border-radius: 10px;
+            background: #fafafa;
+        }
+        .product-item .row {
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+        }
+        .list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: grid;
+            gap: 12px;
+        }
+        .purchase-card {
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            padding: 14px;
+            background: #fff;
+        }
+        .purchase-header {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+        .purchase-products {
+            margin-top: 8px;
+            padding-left: 20px;
+            color: #444;
+        }
+        .status {
+            color: #2d7d46;
+            font-weight: bold;
+        }
+        .error {
+            color: #b42318;
+            font-weight: 600;
+        }
+        .success {
+            color: #027a48;
+            font-weight: 600;
+        }
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="panel">
+            <h1>Purchase management</h1>
+            <form id="purchase-form">
+                <div class="row">
+                    <label>
+                        Payer
+                        <input type="text" name="payer" value="Misha" required>
+                    </label>
+                    <label>
+                        Shop
+                        <input type="text" name="shop" placeholder="e.g. Pyaterochka" required>
+                    </label>
+                    <label>
+                        Location
+                        <input type="text" name="location" placeholder="e.g. Moscow" required>
+                    </label>
+                    <label>
+                        Date
+                        <input type="text" name="date" placeholder="DD/MM/YYYY" value="21/08/2026" required>
+                    </label>
+                </div>
+
+                <div>
+                    <h2>Products</h2>
+                    <div id="products" class="products"></div>
+                    <button type="button" class="secondary" id="add-product-btn">Add product</button>
+                </div>
+
+                <button type="submit">Save purchase</button>
+                <div id="form-status" class="hidden"></div>
+            </form>
+        </div>
+
+        <div class="panel">
+            <h2>All purchases</h2>
+            <button type="button" id="load-purchases-btn">Load purchases</button>
+            <ul id="purchases-list" class="list"></ul>
+        </div>
+    </div>
+
+    <script>
+        const productsContainer = document.getElementById('products');
+        const form = document.getElementById('purchase-form');
+        const purchasesList = document.getElementById('purchases-list');
+        const formStatus = document.getElementById('form-status');
+
+        function addProductRow(product = {}) {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'product-item';
+            wrapper.innerHTML = `
+                <div class="row">
+                    <label>
+                        Name
+                        <input type="text" name="name" value="${product.name || ''}" required>
+                    </label>
+                    <label>
+                        Price
+                        <input type="number" step="0.01" min="0" name="price" value="${product.price || 0}" required>
+                    </label>
+                    <label>
+                        Amount
+                        <input type="number" step="0.01" min="0" name="amount" value="${product.amount || 1}" required>
+                    </label>
+                    <label>
+                        Status
+                        <select name="flag">
+                            <option value="common" ${product.flag === 'common' ? 'selected' : ''}>common</option>
+                            <option value="mine" ${product.flag === 'mine' ? 'selected' : ''}>mine</option>
+                            <option value="other" ${product.flag === 'other' ? 'selected' : ''}>other</option>
+                        </select>
+                    </label>
+                    <div style="display:flex;align-items:end;">
+                        <button type="button" class="secondary remove-product-btn">Remove</button>
+                    </div>
+                </div>
+            `;
+
+            wrapper.querySelector('.remove-product-btn').addEventListener('click', () => {
+                wrapper.remove();
+            });
+
+            productsContainer.appendChild(wrapper);
+        }
+
+        function showMessage(element, message, type) {
+            element.textContent = message;
+            element.className = type === 'error' ? 'error' : 'success';
+            element.classList.remove('hidden');
+        }
+
+        function collectFormData() {
+            const formData = new FormData(form);
+            const payload = {
+                payer: formData.get('payer'),
+                shop: formData.get('shop'),
+                location: formData.get('location'),
+                date: formData.get('date'),
+                products: []
+            };
+
+            const productItems = document.querySelectorAll('#products .product-item');
+            productItems.forEach((item) => {
+                const fields = item.querySelectorAll('input, select');
+                const product = {};
+                fields.forEach((field) => {
+                    product[field.name] = field.value;
+                });
+                payload.products.push(product);
+            });
+
+            return payload;
+        }
+
+        document.getElementById('add-product-btn').addEventListener('click', () => addProductRow());
+
+        form.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const payload = collectFormData();
+
+            try {
+                const response = await fetch('/post_purchase', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(payload)
+                });
+
+                const result = await response.json();
+                if (!response.ok) {
+                    throw new Error(result.error || 'Failed to save purchase');
+                }
+
+                showMessage(formStatus, `Purchase saved successfully. ID: ${result.purchase_id}`, 'success');
+                form.reset();
+                productsContainer.innerHTML = '';
+                addProductRow({ name: '', price: 0, amount: 1, flag: 'common' });
+            } catch (error) {
+                showMessage(formStatus, error.message, 'error');
+            }
+        });
+
+        async function loadPurchases() {
+            try {
+                const response = await fetch('/get_all_purchases');
+                const data = await response.json();
+                if (!response.ok) {
+                    throw new Error(data.error || 'Failed to load purchases');
+                }
+
+                purchasesList.innerHTML = '';
+                if (!data.length) {
+                    purchasesList.innerHTML = '<li>No purchases yet.</li>';
+                    return;
+                }
+
+                data.forEach((purchase) => {
+                    const item = document.createElement('li');
+                    item.className = 'purchase-card';
+
+                    const productsHtml = purchase.products && purchase.products.length
+                        ? purchase.products.map((product) => `
+                            <li>${product.name} — ${product.amount} x ${product.price} (${product.flag})</li>
+                          `).join('')
+                        : '<li>No products</li>';
+
+                    item.innerHTML = `
+                        <div class="purchase-header">
+                            <span>Purchase #${purchase.id}</span>
+                            <span>${purchase.date} / ${purchase.payer}</span>
+                        </div>
+                        <div>${purchase.shop} (${purchase.location})</div>
+                        <ul class="purchase-products">${productsHtml}</ul>
+                    `;
+                    purchasesList.appendChild(item);
+                });
+            } catch (error) {
+                purchasesList.innerHTML = `<li class="error">${error.message}</li>`;
+            }
+        }
+
+        document.getElementById('load-purchases-btn').addEventListener('click', loadPurchases);
+        addProductRow({ name: '', price: 0, amount: 1, flag: 'common' });
+    </script>
+</body>
+</html>

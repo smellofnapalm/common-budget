@@ -1,8 +1,8 @@
 from initialize_tables import initialize
-from get_info import get_all_locations, get_all_products
+from get_info import get_all_locations, get_all_products, get_all_purchases
 from post_info import post_new_purchase
 from drop_info import drop_all
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, render_template
 
 def testing():
     initialize()
@@ -16,9 +16,7 @@ app = Flask(__name__)
 
 @app.route("/")
 def hello_world():
-    return "<p>Welcome to Common Budget!</p>" \
-    "<p>Enter /get_products to get JSON with all products</p>" \
-    "<p>Enter /post_purchase with JSON to post new purhase</p>"
+    return render_template('index.html')
 
 @app.route("/init", methods=['GET'])
 def init():
@@ -30,12 +28,22 @@ def get_products():
     result = get_all_products()
     return jsonify(result), 200
 
+@app.route("/get_all_purchases", methods=['GET'])
+def get_all_purchases_route():
+    result = get_all_purchases()
+    return jsonify(result), 200
+
 @app.route("/post_purchase", methods=['POST'])
 def post_purchase():
     data = request.get_json()
-    id = post_new_purchase(data['payer'], data['shop'], data['location'], data['date'], 
-                           [(el['name'], el['price'], el['amount'], el['flag']) for el in data['products']])
-    return jsonify({'purchase_id' : id}), 200
+    id = post_new_purchase(
+        data['payer'],
+        data['shop'],
+        data['location'],
+        data['date'],
+        [(el['name'], el['price'], el['amount'], el['flag']) for el in data['products']]
+    )
+    return jsonify({'purchase_id': id}), 200
 
 def main():
     app.run(host='0.0.0.0', port=5000)
