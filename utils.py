@@ -14,6 +14,7 @@ class Config:
 
 # Получаем подключение к БД
 def get_connection():
+    print(Config.__dict__)
     return psql.connect(
         database=Config.DB_NAME,
         user=Config.DB_USER,
@@ -53,4 +54,3 @@ def query(func):
                 close_connection(cursor, conn)
         return result
     return wrapper
-    

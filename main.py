@@ -20,7 +20,7 @@ def hello_world():
     "<p>Enter /get_products to get JSON with all products</p>" \
     "<p>Enter /post_purchase with JSON to post new purhase</p>"
 
-@app.route("/init", methods=['POST'])
+@app.route("/init", methods=['GET'])
 def init():
     initialize()
     return "<p>Tables are initialized</p>", 200
