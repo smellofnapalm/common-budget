@@ -1,6 +1,6 @@
 from initialize_tables import initialize
 from get_info import get_all_locations, get_all_products, get_all_purchases
-from post_info import post_new_purchase
+from post_info import post_new_purchase, delete_purchase
 from drop_info import drop_all
 from flask import Flask, request, jsonify, render_template
 
@@ -44,6 +44,18 @@ def post_purchase():
         [(el['name'], el['price'], el['amount'], el['flag']) for el in data['products']]
     )
     return jsonify({'purchase_id': id}), 200
+
+@app.route("/delete_purchase/<int:purchase_id>", methods=['DELETE'])
+def delete_purchase_route(purchase_id):
+    deleted = delete_purchase(purchase_id)
+    if deleted is None:
+        return jsonify({'error': 'Не получилось удалить покупку'}), 400
+    return jsonify({'purchase_id': purchase_id, 'deleted': True}), 200
+
+@app.route("/post_drop_all", methods=['POST'])
+def post_drop():
+    drop_all()
+    return '<p>Успешно удалили все базы</p>'
 
 def main():
     app.run(host='0.0.0.0', port=5000)

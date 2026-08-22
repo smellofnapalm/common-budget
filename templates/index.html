@@ -91,6 +91,19 @@
             margin-bottom: 10px;
             font-weight: 600;
         }
+        .purchase-actions {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+        }
+        .delete-purchase-btn {
+            background: #d92d20;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            padding: 8px 12px;
+            font-weight: 600;
+        }
         .purchase-products {
             margin-top: 8px;
             padding-left: 20px;
@@ -284,9 +297,26 @@
                             <span>Purchase #${purchase.id}</span>
                             <span>${purchase.date} / ${purchase.payer}</span>
                         </div>
+                        <div class="purchase-actions">
+                            <button type="button" class="delete-purchase-btn" data-id="${purchase.id}">Удалить</button>
+                        </div>
                         <div>${purchase.shop} (${purchase.location})</div>
                         <ul class="purchase-products">${productsHtml}</ul>
                     `;
+
+                    item.querySelector('.delete-purchase-btn').addEventListener('click', async () => {
+                        try {
+                            const response = await fetch(`/delete_purchase/${purchase.id}`, { method: 'DELETE' });
+                            const result = await response.json();
+                            if (!response.ok) {
+                                throw new Error(result.error || 'Не получилось удалить покупку');
+                            }
+                            await loadPurchases();
+                        } catch (error) {
+                            window.alert(error.message);
+                        }
+                    });
+
                     purchasesList.appendChild(item);
                 });
             } catch (error) {

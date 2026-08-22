@@ -43,3 +43,10 @@ def post_new_purchase(
     conn.commit()
 
     return res
+
+@query
+def delete_purchase(cursor, conn, purchase_id: int):
+    cursor.execute("DELETE FROM product WHERE purchase_id = %s;", (purchase_id,))
+    cursor.execute("DELETE FROM purchase WHERE id = %s;", (purchase_id,))
+    conn.commit()
+    return True
