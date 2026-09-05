@@ -52,4 +52,9 @@ def get_all_purchases(cursor, conn):
             })
 
     return list(purchases.values())
- 
+
+@query
+def get_all_shops(cursor, conn):
+    cursor.execute("SELECT name FROM shop;")
+    shops = cursor.fetchall()
+    return shops

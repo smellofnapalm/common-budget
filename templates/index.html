@@ -137,12 +137,38 @@
                         <input type="text" name="payer" value="Misha" required>
                     </label>
                     <label>
-                        Shop
-                        <input type="text" name="shop" placeholder="e.g. Pyaterochka" required>
+                        Магазин
+                        <input 
+                            type="text" 
+                            id="shop" 
+                            name="shop" 
+                            list="shops_list" 
+                            placeholder="например, Пятерочка"
+                            autocomplete="on"
+                            class="form-control"
+                            required
+                        >
+
+                        <!-- Выпадающий список (привязан к input через атрибут list) -->
+                        <datalist id="shops_list">
+                            <!-- Сюда будут подгружаться варианты из БД -->
+                        </datalist>
+
                     </label>
                     <label>
-                        Location
-                        <input type="text" name="location" placeholder="e.g. Moscow" required>
+                        Местоположение
+                        <input 
+                            type="text"
+                            id="location"
+                            name="location"
+                            placeholder="например, Москва"
+                            list="locations_list"
+                            autocomplete="on"
+                            class="form-control" 
+                            required
+                        >
+
+                        <datalist id="locations_list"> </datalist>
                     </label>
                     <label>
                         Date
@@ -174,18 +200,48 @@
         const purchasesList = document.getElementById('purchases-list');
         const formStatus = document.getElementById('form-status');
 
+        function loadDataList(document, id, url) {
+            const datalist = document.getElementById(id);
+            fetch(url)
+                .then(response => response.json())
+                .then(data => {
+                    data.forEach(el => {
+                        const option = document.createElement('option');
+                        option.value = el;
+                        datalist.appendChild(option);
+                    });
+                })
+                .catch(error => console.error('Ошибка загрузки:', error));
+        }
+
+        loadDataList(document, 'shops_list', 'api/shops');
+        loadDataList(document, 'locations_list', 'api/locations');
+
         function addProductRow(product = {}) {
             const wrapper = document.createElement('div');
+            const datalistId = `products_list_${crypto.randomUUID()}`;
             wrapper.className = 'product-item';
             wrapper.innerHTML = `
                 <div class="row">
                     <label>
-                        Name
-                        <input type="text" name="name" value="${product.name || ''}" required>
+                        Название продукта
+                        <input 
+                            type="text" 
+                            id="product_${datalistId}" 
+                            name="product_${datalistId}" 
+                            list="${datalistId}"
+                            value="${product.name || ''}" 
+                            placeholder="например, Сыр (за 100 г)"
+                            autocomplete="on"
+                            class="form-control"
+                            required
+                        >
+                        <datalist id="${datalistId}"> </datalist>
                     </label>
+
                     <label>
-                        Price
-                        <input type="number" step="0.01" min="0" name="price" value="${product.price || 0}" required>
+                        Цена (за единицу)
+                        <input type="number" step="1.0" min="0" name="price" value="${product.price || 0}" required>
                     </label>
                     <label>
                         Amount
@@ -210,6 +266,7 @@
             });
 
             productsContainer.appendChild(wrapper);
+            loadDataList(document, datalistId, 'api/products');
         }
 
         function showMessage(element, message, type) {

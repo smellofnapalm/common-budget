@@ -1,5 +1,5 @@
 from initialize_tables import initialize
-from get_info import get_all_locations, get_all_products, get_all_purchases
+from get_info import get_all_locations, get_all_products, get_all_purchases, get_all_shops, get_all_locations
 from post_info import post_new_purchase, delete_purchase
 from drop_info import drop_all
 from flask import Flask, request, jsonify, render_template
@@ -56,6 +56,21 @@ def delete_purchase_route(purchase_id):
 def post_drop():
     drop_all()
     return '<p>Успешно удалили все базы</p>'
+
+@app.route('/api/shops', methods=['GET'])
+def get_shops():
+    shops = get_all_shops()
+    return jsonify([shop[0] for shop in shops])
+
+@app.route('/api/locations', methods=['GET'])
+def get_locations():
+    locations = get_all_locations()
+    return jsonify(locations)
+
+@app.route('/api/products', methods=['GET'])
+def get_products_for_html():
+    products = get_all_products()
+    return jsonify([product[0] for product in products])
 
 def main():
     app.run(host='0.0.0.0', port=5000)
